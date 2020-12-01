@@ -8,7 +8,7 @@
  * for that cache with an instance of this struct
  */
 cache_stats_t *make_cache_stats() {
-  cache_stats_t *stats = (cache_stats_t *)malloc(sizeof(cache_stats_t));
+  cache_stats_t *stats = malloc(sizeof(cache_stats_t));
 
   stats->total_cpu_accesses = 0;
   stats->total_hits = 0;

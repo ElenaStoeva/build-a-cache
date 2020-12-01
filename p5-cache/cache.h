@@ -12,7 +12,7 @@
 // {INVALID, VALID} for VI, {INVALID, SHARED, MODIFIED} for MSI 
 enum state_t { INVALID, VALID, SHARED, MODIFIED };
 
-// what cache protocol are we working with?
+// what coherence protocol are we simulating?
 enum protocol_t { NONE, VI, MSI }; 
 
 typedef struct {
@@ -51,7 +51,6 @@ typedef struct {
   
 } cache_t;
 
-void **make_2d_matrix(int n_row, int n_col, size_t size);
 cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t protocol);
 unsigned long get_cache_tag(cache_t *cache, unsigned long addr);
 unsigned long get_cache_index(cache_t *cache, unsigned long addr);

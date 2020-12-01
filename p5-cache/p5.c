@@ -21,19 +21,19 @@ void printUsage() {
   printf("  -t|trace <tracename>            Name of trace \n");
   printf("  -l|limit <n>                    Simulate only first n insns \n");
   printf("\nExamples:\n");
+  printf("  shell>  ./p5 -t route.1t.short.txt -cache 9 5 1 \n");
+  printf("  shell>  ./p5 -t route.1t.short.txt -cache 12 6 2 \n");
+  printf("  shell>  ./p5 -t route.1t.short.txt -cache 16 4 2 \n");
+  printf("  shell>  ./p5 -t route.1t.long.txt -cache 16 4 2 -limit 500\n");
   printf(
-      "  shell>  ./p5 -verbose -n 1 -t route.1t.long.txt -l 500\n");
+      "  -cache 9 5 1   Creates a direct mapped cache "
+      "with a capacity of 512B and block size of 32B \n");
   printf(
-      "  shell>  ./p5 -v -trace route.1t.long.txt\n");
+      "  -cache 8 6 2   Creates a 2-way set "
+      "associative cache with a capacity of 256B and block size of 64B\n");
   printf(
-      "  shell>  ./p5 -cache 8 5 1 -v   Creates a direct mapped cache "
-      "with a capacity of 256 and block size of 32 \n");
-  printf(
-      "  shell>  ./p5 -cache 9 6 2 -v   Creates a 2-way set "
-      "associative cache with a capacity of 512 and block size of 64\n");
-  printf(
-      "  shell>  ./p5 -cache 9 7 4 -v   Creates a 2-way set "
-      "associative cache with a capacity of 512 and block size of 64\n");
+      "  -cache 16 4 2   Creates a 2-way set "
+      "associative cache with a capacity of 64KB and block size of 16B\n");
 }
 
 void suggest_help(){

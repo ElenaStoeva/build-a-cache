@@ -7,9 +7,9 @@
 #include "print_helpers.h"
 
 simulator_t *make_simulator() {
-  simulator_t *sim = (simulator_t *)malloc(sizeof(simulator_t));
+  simulator_t *sim = malloc(sizeof(simulator_t));
 
-  sim->trace = "trace/saroute.1t.short.txt";
+  sim->trace = "route.1t.short.txt";
   sim->verbose_f = false;
 
   sim->limit_insn = 0;

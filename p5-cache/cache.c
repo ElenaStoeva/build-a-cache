@@ -6,18 +6,8 @@
 #include "cache.h"
 #include "print_helpers.h"
 
-// FIX THIS CODE!
-void **make_2d_matrix(int n_row, int n_col, size_t size) {
-  void **matrix = NULL;
-
-  // malloc an array with n_rows
-  // for each element in the array, malloc another array with n_col
-
-  return matrix;
-}
-
 cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t protocol){
-  cache_t *cache = (cache_t *)malloc(sizeof(cache_t));
+  cache_t *cache = malloc(sizeof(cache_t));
 
   cache->capacity = capacity;      // in Bytes
   cache->block_size = block_size;  // in Bytes
@@ -32,12 +22,13 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
   cache->n_index_bit = 1;
   cache->n_tag_bit = 1;
 
-  // next create the cache lines
-  // Note; this is also incorrect (it shouldn't be a 1 x 1 cache)
+  // next create the cache lines and the array of LRU bits
+  // - malloc an array with n_rows
+  // - for each element in the array, malloc another array with n_col
   // FIX THIS CODE!
 
-  cache->lines = (cache_line_t **)make_2d_matrix(1, 1, sizeof(cache_line_t));
-  cache->lru_way = (int *)malloc(1 * sizeof(int));
+  cache->lines = NULL;
+  cache->lru_way = NULL;
 
   // initializes cache tags to 0, dirty bits to false,
   // state to INVALID, and LRU bits to 0
