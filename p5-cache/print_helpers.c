@@ -42,6 +42,7 @@ void print_stats(cache_stats_t *stats, int core) {
   printf("%d.total_misses \t\t%ld\n", core, stats->total_cpu_accesses - stats->total_hits);
   printf("%d.hit_rate \t\t%.2f\n", core, stats->hit_rate * 100.0);
   printf("%d.miss_rate \t\t%.2f\n", core, (1 - stats->hit_rate) * 100.0);
+  printf("%d.total_upgrade_miss \t%ld\n", core, stats->total_upgrade_miss);
   printf("%d.total_bus_snoops \t%ld\n", core, stats->total_bus_snoops);
   printf("%d.total_snoop_hits \t%ld\n", core, stats->total_snoop_hits);
   printf("%d.total_dirty_evics \t%ld\n", core, stats->total_dirty_evics);
