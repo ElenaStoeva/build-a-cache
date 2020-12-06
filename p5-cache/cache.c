@@ -67,7 +67,7 @@ unsigned long get_cache_index(cache_t *cache, unsigned long addr)
   // FIX THIS CODE!
   //pi's note: this doesn't give the right output but seems logically correct??
   // unsigned long cache_index = (addr << cache->n_tag_bit) >> (cache->n_tag_bit + cache->n_offset_bit);
-  unsigned long cache_index = (addr >> cache->n_offset_bit) & (cache->block_size-1);
+  unsigned long cache_index = (addr >> cache->n_offset_bit) & (cache->n_set - 1);
   return cache_index;
 }
 
