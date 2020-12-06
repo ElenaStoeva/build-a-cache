@@ -88,6 +88,20 @@ unsigned long get_cache_block_addr(cache_t *cache, unsigned long addr)
 bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
 {
   // FIX THIS CODE!
+  unsigned long tag = get_cache_tag(cache, addr);
+  unsigned long index = get_cache_index(cache, addr);
+  // unsigned long block_addr = get_cache_block_addr(cache, addr);
 
-  return true; // cache hit should return true
+  // for direct-mapped
+  if (cache->lines[index][0].tag == tag && cache->lines[index][0].state == VALID)
+  {
+    return HIT;
+  }
+
+  //otherwise no hit, load data from memory into cache addr and return a miss
+  cache->lines[index][0].tag = tag;
+  cache->lines[index][0].state = VALID;
+  return MISS;
+
+  // return true; // cache hit should return true
 }
