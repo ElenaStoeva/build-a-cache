@@ -28,9 +28,9 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
   // - for each element in the array, malloc another array with n_col
   // FIX THIS CODE!
 
-  cache_line_t **linesMatrix[cache->n_set][cache->assoc];
-  //linesMatrix= (cache_line_t *)malloc(sizeof(cache_line_t));
-  cache->lines = linesMatrix;
+  // cache_line_t **linesMatrix[cache->n_set][cache->assoc];
+  // linesMatrix= (cache_line_t *)malloc(cache->n_set*sizeof(cache_line_t));
+  cache->lines = (cache_line_t *)malloc(cache->n_set * sizeof(cache_line_t));
   int lruArray[cache->n_set];
   cache->lru_way = lruArray;
 
@@ -40,14 +40,13 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
   for (int i = 0; i < cache->n_set; i++)
   {
     cache->lru_way[i] = 0;
+    cache_line_t *line = malloc(cache->assoc * sizeof(cache_line_t));
     for (int j = 0; j < cache->assoc; j++)
     {
       // body goes here
-      cache_line_t *line = malloc(sizeof(cache_line_t));
-      line->tag = 0;
-      line->dirty_f = false;
-      line->state = INVALID;
-      cache->lines[i][j] = *line;
+      cache->lines[i][j].tag = 0;
+      cache->lines[i][j].dirty_f = false;
+      cache->lines[i][j].state = INVALID;
     }
   }
 
