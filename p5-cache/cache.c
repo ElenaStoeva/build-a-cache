@@ -57,19 +57,24 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
 unsigned long get_cache_tag(cache_t *cache, unsigned long addr)
 {
   // FIX THIS CODE!
-  return 0;
+  //gets the first n_tag_bit bytes of addr
+  unsigned long cache_tag = addr >> (32 - cache->n_tag_bit);
+  return cache_tag;
 }
 
 unsigned long get_cache_index(cache_t *cache, unsigned long addr)
 {
   // FIX THIS CODE!
-  return 0;
+  //pi's note: this doesn't give the right output but seems logically correct??
+  unsigned long cache_index = (addr << cache->n_tag_bit) >> (cache->n_tag_bit + cache->n_offset_bit);
+  return cache_index;
 }
 
 unsigned long get_cache_block_addr(cache_t *cache, unsigned long addr)
 {
   // FIX THIS CODE!
-  return 0;
+  unsigned long cache_block_addr = (addr >> cache->n_offset_bit) << cache->n_offset_bit;
+  return cache_block_addr;
 }
 
 /* this method takes a cache, an address, and an action
