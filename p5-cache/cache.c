@@ -92,15 +92,18 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
   unsigned long index = get_cache_index(cache, addr);
   // unsigned long block_addr = get_cache_block_addr(cache, addr);
 
-  // for direct-mapped
-  if (cache->lines[index][0].tag == tag && cache->lines[index][0].state == VALID)
+  // for 2-way assoc
+  int lru_way = cache->lru_way[index];
+  if (cache->lines[index][lru_way].tag == tag && cache->lines[index][lru_way].state == VALID)
   {
+    cache->lru_way[index] = !lru_way; // a 2-way assoc has an lru of either 0 or 1
     return HIT;
   }
 
   //otherwise no hit, load data from memory into cache addr and return a miss
-  cache->lines[index][0].tag = tag;
-  cache->lines[index][0].state = VALID;
+  cache->lines[index][lru_way].tag = tag;
+  cache->lines[index][lru_way].state = VALID;
+  cache->lru_way[index] = !lru_way; // a 2-way assoc has an lru of either 0 or 1
   return MISS;
 
   // return true; // cache hit should return true
