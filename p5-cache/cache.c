@@ -107,9 +107,12 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
     cache->lines[index][lru_way].tag = tag;
     cache->lines[index][lru_way].state = VALID;
   }
+  
+  if(cache->assoc != 1){
   cache->lru_way[index] = !lru_way;
-
-return result;
+  }
+  
+  return result;
 
   // VI protocol
   // actions: LOAD, STORE, LD_MISS, ST_MISS
