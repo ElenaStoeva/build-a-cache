@@ -38,7 +38,7 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
   // FIX THIS CODE!
   for (int i = 0; i < cache->n_set; i++)
   {
-    cache->lines[i] = malloc(sizeof(cache_line_t) * cache->assoc);
+    cache->lines[i] = (cache_line_t *)malloc(sizeof(cache_line_t) * cache->assoc);
     cache->lru_way[i] = 0;
     for (int j = 0; j < cache->assoc; j++)
     {
@@ -92,18 +92,27 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
 
   int lru_way = cache->lru_way[index];
 
-  bool result = cache->lines[index][lru_way].tag == tag;
+  bool result;
+  for(int i = 0; i < cache->assoc; i++){
+    if(cache->lines[index][i].tag == tag && cache->lines[index][i].state == VALID){
+      result = true;
+      lru_way = i;
+      break;
+    }
+  }
 
   update_stats(cache->stats, result, false, false, action);
 
    if (!result) {
     cache->lines[index][lru_way].tag = tag;
-    cache->lru_way[index] = !lru_way;
+    cache->lines[index][lru_way].state = VALID;
   }
+  cache->lru_way[index] = !lru_way;
+
 return result;
 
-  // // VI protocol
-  // // actions: LOAD, STORE, LD_MISS, ST_MISS
+  // VI protocol
+  // actions: LOAD, STORE, LD_MISS, ST_MISS
   // if ((action == LOAD || action == STORE) && cache->lines[index][lru_way].state == VALID)
   // {
   //   //stay in V
