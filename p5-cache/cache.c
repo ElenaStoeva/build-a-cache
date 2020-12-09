@@ -56,7 +56,7 @@ unsigned long get_cache_tag(cache_t *cache, unsigned long addr)
 {
   // FIX THIS CODE!
   //gets the first n_tag_bit bytes of addr
-  unsigned long cache_tag = addr >> (32 - cache->n_tag_bit);
+  unsigned long cache_tag = addr >> (ADDRESS_SIZE - cache->n_tag_bit);
   return cache_tag;
 }
 
@@ -90,29 +90,31 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
   unsigned long tag = get_cache_tag(cache, addr);
   unsigned long index = get_cache_index(cache, addr);
 
+  bool result = MISS;
+  bool dirty_evict;
   int lru_way = cache->lru_way[index];
 
-  bool result;
   for(int i = 0; i < cache->assoc; i++){
     if(cache->lines[index][i].tag == tag && cache->lines[index][i].state == VALID){
-      result = true;
-      lru_way = i;
+      result = HIT;
+      cache->lru_way[index] = (cache->assoc > 1) ? !i : 0;
+      if(action == STORE){
+        cache->lines[index][i].dirty_f = true;
+      }
       break;
     }
   }
 
-  update_stats(cache->stats, result, false, false, action);
-
-   if (!result) {
+   if (result == MISS) {
     cache->lines[index][lru_way].tag = tag;
     cache->lines[index][lru_way].state = VALID;
+    dirty_evict = cache->lines[index][lru_way].dirty_f;
+    cache->lines[index][lru_way].dirty_f = action == STORE ? true : false;
+    cache->lru_way[index] = (cache->assoc > 1) ? !lru_way : 0;
   }
-  
-  if(cache->assoc != 1){
-  cache->lru_way[index] = !lru_way;
-  }
-  
-  return result;
+
+  if (action != LD_MISS && action != ST_MISS) 
+    update_stats(cache->stats, result, dirty_evict, false, action);
 
   // VI protocol
   // actions: LOAD, STORE, LD_MISS, ST_MISS
@@ -170,5 +172,5 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
   //   cache->lines[index][lru_way].tag = tag;
   //   return MISS;
   // }
-  // return MISS;
+  return result;
 }
