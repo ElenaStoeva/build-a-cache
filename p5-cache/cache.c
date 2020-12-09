@@ -49,7 +49,7 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
       cache->lines[i][j].state = INVALID;
     }
   }
-
+  cache->stats = make_cache_stats();
   return cache;
 }
 
@@ -90,59 +90,74 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
   // FIX THIS CODE!
   unsigned long tag = get_cache_tag(cache, addr);
   unsigned long index = get_cache_index(cache, addr);
-  // unsigned long block_addr = get_cache_block_addr(cache, addr);
+
   int lru_way = cache->lru_way[index];
 
-  // VI protocol
-  // actions: LOAD, STORE, LD_MISS, ST_MISS
-  if ((action == LOAD || action == STORE) && cache->lines[index][lru_way].state == VALID)
-  {
-    //stay in V
+  bool result = cache->lines[index][lru_way].tag == tag;
+
+  update_stats(cache->stats, result, false, false, action);
+
+   if (!result) {
+    cache->lines[index][lru_way].tag = tag;
     cache->lru_way[index] = !lru_way;
-    if (cache->lines[index][lru_way].tag == tag)
-    {
-      return HIT;
-    }
-    //otherwise no hit, load data from memory into cache addr and return a miss
-    cache->lines[index][lru_way].tag = tag;
-    return MISS;
   }
+return result;
 
-  if ((action == LOAD || action == STORE) && cache->lines[index][lru_way].state == INVALID)
-  {
-    cache->lru_way[index] = !lru_way;
-    cache->lines[index][lru_way].state = VALID; //transition to V
+  // // VI protocol
+  // // actions: LOAD, STORE, LD_MISS, ST_MISS
+  // if ((action == LOAD || action == STORE) && cache->lines[index][lru_way].state == VALID)
+  // {
+  //   //stay in V
+  //   cache->lru_way[index] = !lru_way;
+  //   if (cache->lines[index][lru_way].tag == tag)
+  //   {
+  //     update_stats(cache->stats, true, false, false, action);
+  //     return HIT;
+  //   }
+  //   //otherwise no hit, load data from memory into cache addr and return a miss
+  //   cache->lines[index][lru_way].tag = tag;
+  //   update_stats(cache->stats, false, false, false, action);
+  //   return MISS;
+  // }
 
-    if (cache->lines[index][lru_way].tag == tag)
-    {
-      return HIT;
-    }
-    //otherwise no hit, load data from memory into cache addr and return a miss
-    cache->lines[index][lru_way].tag = tag;
-    return MISS;
-  }
+  // if ((action == LOAD || action == STORE) && cache->lines[index][lru_way].state == INVALID)
+  // {
+  //   cache->lru_way[index] = !lru_way;
+  //   cache->lines[index][lru_way].state = VALID; //transition to V
 
-  if ((action == LD_MISS || action == ST_MISS) && cache->lines[index][lru_way].state == VALID)
-  {
-    cache->lines[index][lru_way].state = INVALID; //transition to I
-    if (cache->lines[index][lru_way].tag == tag)
-    {
-      return HIT;
-    }
-    //otherwise no hit, load data from memory into cache addr and return a miss
-    cache->lines[index][lru_way].tag = tag;
-    return MISS;
-  }
+  //   if (cache->lines[index][lru_way].tag == tag)
+  //   {
+  //     update_stats(cache->stats, true, false, false, action);
+  //     return HIT;
+  //   }
+  //   //otherwise no hit, load data from memory into cache addr and return a miss
+  //   cache->lines[index][lru_way].tag = tag;
+  //   update_stats(cache->stats, false, false, false, action);
+  //   return MISS;
+  // }
 
-  if ((action == LD_MISS || action == ST_MISS) && cache->lines[index][lru_way].state == INVALID)
-  {
-    //stay in I
-    if (cache->lines[index][lru_way].tag == tag)
-    {
-      return HIT;
-    }
-    //otherwise no hit, load data from memory into cache addr and return a miss
-    cache->lines[index][lru_way].tag = tag;
-    return MISS;
-  }
+  // if ((action == LD_MISS || action == ST_MISS) && cache->lines[index][lru_way].state == VALID)
+  // {
+  //   cache->lines[index][lru_way].state = INVALID; //transition to I
+  //   if (cache->lines[index][lru_way].tag == tag)
+  //   {
+  //     return HIT;
+  //   }
+  //   //otherwise no hit, load data from memory into cache addr and return a miss
+  //   cache->lines[index][lru_way].tag = tag;
+  //   return MISS;
+  // }
+
+  // if ((action == LD_MISS || action == ST_MISS) && cache->lines[index][lru_way].state == INVALID)
+  // {
+  //   //stay in I
+  //   if (cache->lines[index][lru_way].tag == tag)
+  //   {
+  //     return HIT;
+  //   }
+  //   //otherwise no hit, load data from memory into cache addr and return a miss
+  //   cache->lines[index][lru_way].tag = tag;
+  //   return MISS;
+  // }
+  // return MISS;
 }
