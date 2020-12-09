@@ -30,17 +30,16 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
 
   // cache_line_t **linesMatrix[cache->n_set][cache->assoc];
   // linesMatrix= (cache_line_t *)malloc(cache->n_set*sizeof(cache_line_t));
-  cache->lines = (cache_line_t *)malloc(cache->n_set * sizeof(cache_line_t));
-  int lruArray[cache->n_set];
-  cache->lru_way = lruArray;
+  cache->lines = (cache_line_t **)malloc(cache->n_set * sizeof(cache_line_t *));
+  cache->lru_way = malloc(sizeof(int) * cache->n_set);
 
   // initializes cache tags to 0, dirty bits to false,
   // state to INVALID, and LRU bits to 0
   // FIX THIS CODE!
   for (int i = 0; i < cache->n_set; i++)
   {
+    cache->lines[i] = malloc(sizeof(cache_line_t) * cache->assoc);
     cache->lru_way[i] = 0;
-    cache_line_t *line = malloc(cache->assoc * sizeof(cache_line_t));
     for (int j = 0; j < cache->assoc; j++)
     {
       // body goes here
