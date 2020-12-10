@@ -106,6 +106,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         dirty_evict = cache->lines[index][i].dirty_f;
         cache->lines[index][i].state = INVALID;
       }
+      log_way(i);
       break;
     }
   }
@@ -116,8 +117,10 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
     dirty_evict = cache->lines[index][lru].dirty_f;
     cache->lines[index][lru].dirty_f = (action == STORE);
     cache->lru_way[index] = (cache->assoc > 1) ? !lru : 0;
+    log_way(lru);
   }
 
+  log_set(index);
   update_stats(cache->stats, result, dirty_evict, false, action);
 
   return result;
