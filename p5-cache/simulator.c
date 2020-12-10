@@ -73,10 +73,10 @@ void process_trace(simulator_t *sim) {
     // (LOAD --> LD_MISS, STORE --> ST_MISS)
     if (!hit_f) { 
       for (i = 0; i < sim->n_core; i++){ // 1 core? does nothing
-	if (i != core) {
-	  access_cache(sim->cache[i], address,
+	      if (i != core) {
+	        access_cache(sim->cache[i], address,
 		       (action == LOAD) ? LD_MISS : ST_MISS);
-	}  
+      	}  
       }
     }
   }

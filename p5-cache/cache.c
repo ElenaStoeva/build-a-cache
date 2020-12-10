@@ -28,8 +28,6 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
   // - for each element in the array, malloc another array with n_col
   // FIX THIS CODE!
 
-  // cache_line_t **linesMatrix[cache->n_set][cache->assoc];
-  // linesMatrix= (cache_line_t *)malloc(cache->n_set*sizeof(cache_line_t));
   cache->lines = (cache_line_t **)malloc(cache->n_set * sizeof(cache_line_t *));
   cache->lru_way = malloc(sizeof(int) * cache->n_set);
 
@@ -63,8 +61,6 @@ unsigned long get_cache_tag(cache_t *cache, unsigned long addr)
 unsigned long get_cache_index(cache_t *cache, unsigned long addr)
 {
   // FIX THIS CODE!
-  //pi's note: this doesn't give the right output but seems logically correct??
-  // unsigned long cache_index = (addr << cache->n_tag_bit) >> (cache->n_tag_bit + cache->n_offset_bit);
   unsigned long cache_index = (addr >> cache->n_offset_bit) & (cache->n_set - 1);
   return cache_index;
 }
@@ -91,30 +87,43 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
   unsigned long index = get_cache_index(cache, addr);
 
   bool result = MISS;
-  bool dirty_evict;
-  int lru_way = cache->lru_way[index];
+  bool dirty_evict = false;
+  int lru = cache->lru_way[index];
 
-  for(int i = 0; i < cache->assoc; i++){
-    if(cache->lines[index][i].tag == tag && cache->lines[index][i].state == VALID){
+  for (int i = 0; i < cache->assoc; i++)
+  {
+    if (cache->lines[index][i].tag == tag && cache->lines[index][i].state == VALID)
+    {
       result = HIT;
-      cache->lru_way[index] = (cache->assoc > 1) ? !i : 0;
-      if(action == STORE){
-        cache->lines[index][i].dirty_f = true;
+      if (action == LOAD || action == STORE)
+      {
+        cache->lru_way[index] = (cache->assoc > 1) ? !i : 0;
+        if (action == STORE)
+        {
+          cache->lines[index][i].dirty_f = true;
+        }
+        dirty_evict = false;
       }
       break;
     }
   }
-
-   if (result == MISS) {
-    cache->lines[index][lru_way].tag = tag;
-    cache->lines[index][lru_way].state = VALID;
-    dirty_evict = cache->lines[index][lru_way].dirty_f;
-    cache->lines[index][lru_way].dirty_f = action == STORE ? true : false;
-    cache->lru_way[index] = (cache->assoc > 1) ? !lru_way : 0;
+  if (action == LOAD || action == STORE)
+  {
+    if (result == MISS)
+    {
+      cache->lines[index][lru].tag = tag;
+      // bool old_dirty = cache->lines[index][lru].dirty_f;
+      cache->lines[index][lru].state = VALID;
+      if (action == LOAD || action == STORE)
+      {
+        dirty_evict = cache->lines[index][lru].dirty_f;
+      }
+      cache->lines[index][lru].dirty_f = (action == STORE);
+      cache->lru_way[index] = (cache->assoc > 1) ? !lru : 0;
+    }
   }
 
-  if (action != LD_MISS && action != ST_MISS) 
-    update_stats(cache->stats, result, dirty_evict, false, action);
+  update_stats(cache->stats, result, dirty_evict, false, action);
 
   // VI protocol
   // actions: LOAD, STORE, LD_MISS, ST_MISS
