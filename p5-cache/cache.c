@@ -99,13 +99,11 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
       {
         cache->lru_way[index] = (cache->assoc > 1) ? !i : 0;
         if (action == STORE)
-        {
           cache->lines[index][i].dirty_f = true;
-        }
-        dirty_evict = false;
       }
       if (action == LD_MISS || action == ST_MISS)
       {
+        dirty_evict = cache->lines[index][i].dirty_f;
         cache->lines[index][i].state = INVALID;
       }
       break;
