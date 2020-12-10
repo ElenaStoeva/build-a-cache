@@ -107,20 +107,13 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
       break;
     }
   }
-  if (action == LOAD || action == STORE)
+  if (result == MISS && (action == LOAD || action == STORE))
   {
-    if (result == MISS)
-    {
-      cache->lines[index][lru].tag = tag;
-      // bool old_dirty = cache->lines[index][lru].dirty_f;
-      cache->lines[index][lru].state = VALID;
-      if (action == LOAD || action == STORE)
-      {
-        dirty_evict = cache->lines[index][lru].dirty_f;
-      }
-      cache->lines[index][lru].dirty_f = (action == STORE);
-      cache->lru_way[index] = (cache->assoc > 1) ? !lru : 0;
-    }
+    cache->lines[index][lru].tag = tag;
+    cache->lines[index][lru].state = VALID;
+    dirty_evict = cache->lines[index][lru].dirty_f;
+    cache->lines[index][lru].dirty_f = (action == STORE);
+    cache->lru_way[index] = (cache->assoc > 1) ? !lru : 0;
   }
 
   update_stats(cache->stats, result, dirty_evict, false, action);
