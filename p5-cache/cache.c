@@ -121,6 +121,5 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
 
   log_set(index);
   update_stats(cache->stats, result, dirty_evict, false, action);
-
   return result;
 }
