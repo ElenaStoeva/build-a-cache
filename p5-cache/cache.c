@@ -97,7 +97,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
       result = HIT;
       if (action == LOAD || action == STORE)
       {
-        cache->lru_way[index] = (cache->assoc = 2) ? !i : 0;
+        cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
         cache->lines[index][i].dirty_f = (action == STORE);
       }
       if (action == LD_MISS || action == ST_MISS)
@@ -115,7 +115,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
     cache->lines[index][lru].state = VALID;
     dirty_evict = cache->lines[index][lru].dirty_f;
     cache->lines[index][lru].dirty_f = (action == STORE);
-    cache->lru_way[index] = (cache->assoc = 2) ? !lru : 0;
+    cache->lru_way[index] = (cache->assoc == 2) ? !lru : 0;
     log_way(lru);
   }
 
