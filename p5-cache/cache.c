@@ -89,6 +89,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
 
   bool result = MISS;
   bool dirty_evict = false;
+  bool upgrade_miss = false;
   int lru = cache->lru_way[index];
 
   for (int i = 0; i < cache->assoc; i++)
@@ -102,8 +103,18 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
       }
       else if (action == STORE)
       {
-        cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
         cache->lines[index][i].dirty_f = true;
+        if (cache->lines[index][i].state == VALID || cache->lines[index][i].state == MODIFIED)
+        {
+          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+        }
+        else if (cache->lines[index][i].state == SHARED)
+        {
+          result = MISS;
+          upgrade_miss = true;
+          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+          cache->lines[index][i].state = MODIFIED;
+        }
       }
       else if (action == LD_MISS)
       {
@@ -115,6 +126,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         else if (cache->protocol == MSI)
         {
           dirty_evict = cache->lines[index][i].dirty_f;
+          cache->lines[index][i].state = cache->lines[index][i].state == INVALID ? INVALID : SHARED;
         }
       }
       else
@@ -127,16 +139,24 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         else if (cache->protocol == MSI)
         {
           dirty_evict = cache->lines[index][i].dirty_f;
+          cache->lines[index][i].state = INVALID;
         }
       }
       log_way(i);
       break;
     }
   }
-  if (result == MISS && (action == LOAD || action == STORE))
+  if (result == MISS && (action == LOAD || action == STORE) && !upgrade_miss)
   {
     cache->lines[index][lru].tag = tag;
-    cache->lines[index][lru].state = VALID;
+    if (cache->protocol == MSI)
+    {
+      cache->lines[index][lru].state = action == STORE ? MODIFIED : SHARED;
+    }
+    else
+    {
+      cache->lines[index][lru].state = VALID;
+    }
     dirty_evict = cache->lines[index][lru].dirty_f;
     cache->lines[index][lru].dirty_f = (action == STORE);
     cache->lru_way[index] = (cache->assoc == 2) ? !lru : 0;
@@ -144,6 +164,6 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
   }
 
   log_set(index);
-  update_stats(cache->stats, result, dirty_evict, false, action);
+  update_stats(cache->stats, result, dirty_evict, upgrade_miss, action);
   return result;
 }
