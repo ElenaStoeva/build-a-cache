@@ -65,14 +65,15 @@ unsigned long get_cache_block_addr(cache_t *cache, unsigned long addr)
 }
 
 /* this method takes a cache, an address, and an action
- * it proceses the cache access. functionality in no particular order: 
+ * it proceses the cache access using the MSI protocol.
+ * Functionality in no particular order: 
  *   - look up the address in the cache, determine if hit or miss
  *   - update the LRU_way, cacheTags, state, dirty flags if necessary
  *   - update the cache statistics (call update_stats)
  * return true if there was a hit, false if there was a miss
  * Use the "get" helper functions above. They make your life easier.
  */
-bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
+bool access_cache_MSI(cache_t *cache, unsigned long addr, enum action_t action)
 {
   unsigned long tag = get_cache_tag(cache, addr);
   unsigned long index = get_cache_index(cache, addr);
@@ -86,37 +87,47 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
   {
     if (cache->lines[index][i].tag == tag)
     {
-      result = HIT && cache->lines[index][i].state != INVALID;
+      result = HIT;
+      enum state_t state = cache->lines[index][i].state;
       if (action == LOAD)
       {
+        if (state == INVALID)
+        {
+          result = MISS;
+          state = cache->lines[index][i].state = SHARED;
+        }
         cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
       }
       else if (action == STORE)
       {
-        cache->lines[index][i].dirty_f = true;
-        cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
-        if (cache->lines[index][i].state == SHARED)
+        if (state == INVALID)
+        {
+          result = MISS;
+          state = cache->lines[index][i].state = MODIFIED;
+        }
+        if (state == SHARED)
         {
           result = MISS;
           upgrade_miss = true;
           cache->lines[index][i].state = MODIFIED;
         }
+        cache->lines[index][i].dirty_f = true;
+        cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
       }
       else if (action == LD_MISS)
       {
-        dirty_evict = cache->lines[index][i].dirty_f;
-        if (cache->protocol == VI)
+        if (state == MODIFIED)
         {
-          cache->lines[index][i].state = INVALID;
-        }
-        else if (cache->protocol == MSI)
-        {
-          cache->lines[index][i].state = cache->lines[index][i].state == INVALID ? INVALID : SHARED;
+          dirty_evict = true;
+          cache->lines[index][i].state = SHARED;
         }
       }
       else // action == ST_MISS
       {
-        dirty_evict = cache->lines[index][i].dirty_f;
+        if (state == MODIFIED)
+        {
+          dirty_evict = true;
+        }
         cache->lines[index][i].state = INVALID;
       }
       log_way(i);
@@ -126,15 +137,8 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
   if (result == MISS && (action == LOAD || action == STORE) && !upgrade_miss)
   {
     cache->lines[index][lru].tag = tag;
-    if (cache->protocol == MSI)
-    {
-      cache->lines[index][lru].state = action == STORE ? MODIFIED : SHARED;
-    }
-    else
-    {
-      cache->lines[index][lru].state = VALID;
-    }
     dirty_evict = cache->lines[index][lru].dirty_f;
+    cache->lines[index][lru].state = action == STORE ? MODIFIED : SHARED;
     cache->lines[index][lru].dirty_f = (action == STORE);
     cache->lru_way[index] = (cache->assoc == 2) ? !lru : 0;
     log_way(lru);
@@ -142,5 +146,76 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
 
   log_set(index);
   update_stats(cache->stats, result, dirty_evict, upgrade_miss, action);
+  return result;
+}
+
+/* this method takes a cache, an address, and an action
+ * it proceses the cache access. functionality in no particular order: 
+ *   - look up the address in the cache, determine if hit or miss
+ *   - update the LRU_way, cacheTags, state, dirty flags if necessary
+ *   - update the cache statistics (call update_stats)
+ * return true if there was a hit, false if there was a miss
+ * Use the "get" helper functions above. They make your life easier.
+ */
+bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
+{
+  bool result = MISS;
+
+  if (cache->protocol == MSI)
+  {
+    result = access_cache_MSI(cache, addr, action);
+  }
+
+  else
+  {
+    unsigned long tag = get_cache_tag(cache, addr);
+    unsigned long index = get_cache_index(cache, addr);
+
+    bool dirty_evict = false;
+    int lru = cache->lru_way[index];
+    for (int i = 0; i < cache->assoc; i++)
+    {
+      if (cache->lines[index][i].tag == tag)
+      {
+        enum state_t state = cache->lines[index][i].state;
+        if (action == LOAD && state == VALID)
+        {
+          result = HIT;
+          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+        }
+        if (action == STORE && state == VALID)
+        {
+          result = HIT;
+          cache->lines[index][i].dirty_f = true;
+          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+        }
+        if (action == LD_MISS || action == ST_MISS)
+        {
+          result = HIT;
+          if (state == VALID)
+          {
+            dirty_evict = cache->lines[index][i].dirty_f;
+            cache->lines[index][i].state = INVALID;
+          }
+        }
+        log_way(i);
+        break;
+      }
+    }
+
+    if (result == MISS && (action == LOAD || action == STORE))
+    {
+      cache->lines[index][lru].tag = tag;
+      cache->lines[index][lru].state = VALID;
+      dirty_evict = cache->lines[index][lru].dirty_f;
+      cache->lines[index][lru].dirty_f = (action == STORE);
+      cache->lru_way[index] = (cache->assoc == 2) ? !lru : 0;
+      log_way(lru);
+    }
+
+    log_set(index);
+    update_stats(cache->stats, result, dirty_evict, false, action);
+  }
+
   return result;
 }
