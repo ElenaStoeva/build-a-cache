@@ -177,21 +177,29 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
     {
       if (cache->lines[index][i].tag == tag)
       {
+        result = HIT;
         enum state_t state = cache->lines[index][i].state;
-        if (action == LOAD && state == VALID)
+        if (action == LOAD)
         {
-          result = HIT;
+          if (state == INVALID)
+          {
+            result = MISS;
+            cache->lines[index][i].state = VALID;
+          }
           cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
         }
-        if (action == STORE && state == VALID)
+        else if (action == STORE)
         {
-          result = HIT;
+          if (state == INVALID)
+          {
+            result = MISS;
+            cache->lines[index][i].state = VALID;
+          }
           cache->lines[index][i].dirty_f = true;
           cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
         }
-        if (action == LD_MISS || action == ST_MISS)
+        else // action == LD_MISS || action == ST_MISS
         {
-          result = HIT;
           if (state == VALID)
           {
             dirty_evict = cache->lines[index][i].dirty_f;
