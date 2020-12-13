@@ -14,9 +14,7 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
   cache->block_size = block_size; // in Bytes, size of a single block
   cache->assoc = assoc;           // 1, 2, 3... etc.
 
-  // FIX THIS CODE!
-  // first, correctly set these 5 variables. THEY ARE ALL WRONG
-  // note: you may find math.h's log2 function useful
+  // first, correctly set these 5 variables.
   cache->n_total_cache_line = capacity / block_size;
   cache->n_set = capacity / (assoc * block_size);
   cache->n_offset_bit = log2(block_size);
@@ -26,21 +24,17 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
   // next create the cache lines and the array of LRU bits
   // - malloc an array with n_rows
   // - for each element in the array, malloc another array with n_col
-  // FIX THIS CODE!
-
-  cache->lines = (cache_line_t **)malloc(cache->n_set * sizeof(cache_line_t *));
+  cache->lines = malloc(cache->n_set * sizeof(cache_line_t));
   cache->lru_way = malloc(sizeof(int) * cache->n_set);
 
   // initializes cache tags to 0, dirty bits to false,
   // state to INVALID, and LRU bits to 0
-  // FIX THIS CODE!
   for (int i = 0; i < cache->n_set; i++)
   {
-    cache->lines[i] = (cache_line_t *)malloc(sizeof(cache_line_t) * cache->assoc);
+    cache->lines[i] = malloc(sizeof(cache_line_t) * cache->assoc);
     cache->lru_way[i] = 0;
     for (int j = 0; j < cache->assoc; j++)
     {
-      // body goes here
       cache->lines[i][j].tag = 0;
       cache->lines[i][j].dirty_f = false;
       cache->lines[i][j].state = INVALID;
@@ -53,7 +47,6 @@ cache_t *make_cache(int capacity, int block_size, int assoc, enum protocol_t pro
 
 unsigned long get_cache_tag(cache_t *cache, unsigned long addr)
 {
-  // FIX THIS CODE!
   //gets the first n_tag_bit bytes of addr
   unsigned long cache_tag = addr >> (ADDRESS_SIZE - cache->n_tag_bit);
   return cache_tag;
@@ -61,14 +54,12 @@ unsigned long get_cache_tag(cache_t *cache, unsigned long addr)
 
 unsigned long get_cache_index(cache_t *cache, unsigned long addr)
 {
-  // FIX THIS CODE!
   unsigned long cache_index = (addr >> cache->n_offset_bit) & (cache->n_set - 1);
   return cache_index;
 }
 
 unsigned long get_cache_block_addr(cache_t *cache, unsigned long addr)
 {
-  // FIX THIS CODE!
   unsigned long cache_block_addr = (addr >> cache->n_offset_bit) << cache->n_offset_bit;
   return cache_block_addr;
 }
@@ -83,7 +74,6 @@ unsigned long get_cache_block_addr(cache_t *cache, unsigned long addr)
  */
 bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
 {
-  // FIX THIS CODE!
   unsigned long tag = get_cache_tag(cache, addr);
   unsigned long index = get_cache_index(cache, addr);
 
@@ -104,43 +94,30 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
       else if (action == STORE)
       {
         cache->lines[index][i].dirty_f = true;
-        if (cache->lines[index][i].state == VALID || cache->lines[index][i].state == MODIFIED)
-        {
-          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
-        }
-        else if (cache->lines[index][i].state == SHARED)
+        cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+        if (cache->lines[index][i].state == SHARED)
         {
           result = MISS;
           upgrade_miss = true;
-          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
           cache->lines[index][i].state = MODIFIED;
         }
       }
       else if (action == LD_MISS)
       {
+        dirty_evict = cache->lines[index][i].dirty_f;
         if (cache->protocol == VI)
         {
-          dirty_evict = cache->lines[index][i].dirty_f;
           cache->lines[index][i].state = INVALID;
         }
         else if (cache->protocol == MSI)
         {
-          dirty_evict = cache->lines[index][i].dirty_f;
           cache->lines[index][i].state = cache->lines[index][i].state == INVALID ? INVALID : SHARED;
         }
       }
-      else
+      else // action == ST_MISS
       {
-        if (cache->protocol == VI)
-        {
-          dirty_evict = cache->lines[index][i].dirty_f;
-          cache->lines[index][i].state = INVALID;
-        }
-        else if (cache->protocol == MSI)
-        {
-          dirty_evict = cache->lines[index][i].dirty_f;
-          cache->lines[index][i].state = INVALID;
-        }
+        dirty_evict = cache->lines[index][i].dirty_f;
+        cache->lines[index][i].state = INVALID;
       }
       log_way(i);
       break;
