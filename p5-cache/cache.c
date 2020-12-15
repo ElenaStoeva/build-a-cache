@@ -181,7 +181,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         enum state_t state = cache->lines[index][i].state;
         if (action == LOAD)
         {
-          if (state == INVALID)
+          if (state == INVALID && cache->protocol != NONE)
           {
             result = MISS;
             cache->lines[index][i].state = VALID;
@@ -190,7 +190,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         }
         else if (action == STORE)
         {
-          if (state == INVALID)
+          if (state == INVALID && cache->protocol != NONE)
           {
             result = MISS;
             cache->lines[index][i].state = VALID;
@@ -200,7 +200,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         }
         else // action == LD_MISS || action == ST_MISS
         {
-          if (state == VALID)
+          if (state == VALID && cache->protocol != NONE)
           {
             dirty_evict = cache->lines[index][i].dirty_f;
             cache->lines[index][i].state = INVALID;
