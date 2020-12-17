@@ -184,19 +184,23 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
           if (state == INVALID && cache->protocol == VI)
           {
             result = MISS;
-            cache->lines[index][i].state = VALID;
           }
-          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+          else
+          {
+            cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+          }
         }
         else if (action == STORE)
         {
           if (state == INVALID && cache->protocol == VI)
           {
             result = MISS;
-            cache->lines[index][i].state = VALID;
           }
-          cache->lines[index][i].dirty_f = true;
-          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+          else
+          {
+            cache->lines[index][i].dirty_f = true;
+            cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+          }
         }
         else // action == LD_MISS || action == ST_MISS
         {
