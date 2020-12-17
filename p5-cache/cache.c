@@ -103,7 +103,7 @@ bool access_cache_MSI(cache_t *cache, unsigned long addr, enum action_t action)
         if (state == INVALID)
         {
           result = MISS;
-          state = cache->lines[index][i].state = MODIFIED;
+          cache->lines[index][i].state = MODIFIED;
         }
         if (state == SHARED)
         {
@@ -181,7 +181,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         enum state_t state = cache->lines[index][i].state;
         if (action == LOAD)
         {
-          if (state == INVALID && cache->protocol != NONE)
+          if (state == INVALID && cache->protocol == VI)
           {
             result = MISS;
             cache->lines[index][i].state = VALID;
@@ -190,7 +190,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         }
         else if (action == STORE)
         {
-          if (state == INVALID && cache->protocol != NONE)
+          if (state == INVALID && cache->protocol == VI)
           {
             result = MISS;
             cache->lines[index][i].state = VALID;
@@ -200,7 +200,7 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
         }
         else // action == LD_MISS || action == ST_MISS
         {
-          if (state == VALID && cache->protocol != NONE)
+          if (state == VALID && cache->protocol == VI)
           {
             dirty_evict = cache->lines[index][i].dirty_f;
             cache->lines[index][i].state = INVALID;
