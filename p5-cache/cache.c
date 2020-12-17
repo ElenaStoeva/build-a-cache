@@ -94,25 +94,31 @@ bool access_cache_MSI(cache_t *cache, unsigned long addr, enum action_t action)
         if (state == INVALID)
         {
           result = MISS;
-          state = cache->lines[index][i].state = SHARED;
         }
-        cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+        else
+        {
+          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+        }
       }
       else if (action == STORE)
       {
         if (state == INVALID)
         {
           result = MISS;
-          cache->lines[index][i].state = MODIFIED;
         }
         if (state == SHARED)
         {
           result = MISS;
           upgrade_miss = true;
           cache->lines[index][i].state = MODIFIED;
+          cache->lines[index][i].dirty_f = true;
+          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
         }
-        cache->lines[index][i].dirty_f = true;
-        cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+        else
+        {
+          cache->lines[index][i].dirty_f = true;
+          cache->lru_way[index] = (cache->assoc == 2) ? !i : 0;
+        }
       }
       else if (action == LD_MISS)
       {
