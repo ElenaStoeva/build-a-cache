@@ -137,7 +137,10 @@ bool access_cache_MSI(cache_t *cache, unsigned long addr, enum action_t action)
         cache->lines[index][i].state = INVALID;
       }
       log_way(i);
-      break;
+      if (result == HIT)
+      {
+        break;
+      }
     }
   }
   if (result == MISS && (action == LOAD || action == STORE) && !upgrade_miss)
@@ -217,7 +220,10 @@ bool access_cache(cache_t *cache, unsigned long addr, enum action_t action)
           }
         }
         log_way(i);
-        break;
+        if (result == HIT)
+        {
+          break;
+        }
       }
     }
 
